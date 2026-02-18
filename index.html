@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laser Cursor Configurator - Custom High-Visibility Mouse Reticle</title>
+    
+    <!-- SEO & Metadata -->
+    <meta name="description" content="Configure and generate a custom, high-visibility laser cursor bookmarklet for your browser. Design a reticle overlay to ensure you never lose your mouse pointer again.">
+    <meta name="keywords" content="browser cursor, mouse reticle, accessibility cursor, high visibility pointer, bookmarklet generator, cursor customization, laser pointer js, web accessibility tool">
+    <meta name="author" content="Chris Pirillo">
+    <link rel="canonical" href="https://pirillo.com/arcade/laser-cursor.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pirillo.com/arcade/laser-cursor.html">
+    <meta property="og:title" content="Laser Cursor Configurator">
+    <meta property="og:description" content="Create a high-visibility reticle for your browser. Design it, drag it to your bookmarks, and never lose your mouse again.">
+    <meta property="og:image" content="https://pirillo.com/arcade/images/laser-cursor.png">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://pirillo.com/arcade/laser-cursor.html">
+    <meta name="twitter:title" content="Laser Cursor Configurator">
+    <meta name="twitter:description" content="Create a high-visibility reticle for your browser. Design it, drag it to your bookmarks, and never lose your mouse again.">
+    <meta name="twitter:image" content="https://pirillo.com/arcade/images/laser-cursor.png">
+    <meta name="twitter:creator" content="@ChrisPirillo">
+
+    <!-- Performance & Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1CQ4D3VQ3L"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-1CQ4D3VQ3L');
+    </script>
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Laser Cursor Configurator",
+      "operatingSystem": "Any",
+      "applicationCategory": "BrowserApplication",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "A browser-based tool to generate high-visibility cursor bookmarklets for accessibility and presentation.",
+      "author": {
+        "@type": "Person",
+        "name": "Chris Pirillo",
+        "url": "https://pirillo.com"
+      }
+    }
+    </script>
+
+    <style>
+        :root {
+            --bg-body: #050505;
+            --bg-card: #121212;
+            --bg-panel: #1a1a1a;
+            --border-color: #333;
+            --text-main: #ededed;
+            --text-muted: #888;
+            --accent-color: #00ff9d;
+            --danger-color: #ff4757;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .configurator-container {
+            width: 100%;
+            max-width: 960px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* --- Header --- */
+        header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+            font-size: 1.5rem;
+            margin: 0 0 0.5rem 0;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+            color: #fff;
+        }
+
+        .value-prop {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.4;
+        }
+
+        /* --- DASHBOARD LAYOUT --- */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 340px 1fr; /* Preview | Controls */
+            gap: 1.5rem;
+            align-items: stretch;
+        }
+
+        /* Common Panel Styles */
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* LEFT COL: Preview Zone */
+        .preview-pane {
+            display: flex;
+            flex-direction: column;
+            gap: 0; 
+            padding: 0; 
+            overflow: hidden;
+        }
+
+        .preview-box {
+            flex-grow: 1;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            
+            /* SPLIT BACKGROUND: DARK LEFT, LIGHT RIGHT */
+            background-color: #111;
+            background-image: 
+                linear-gradient(rgba(128,128,128,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(128,128,128,0.1) 1px, transparent 1px),
+                linear-gradient(to right, #111 50%, #ddd 50%);
+            background-size: 20px 20px, 20px 20px, 100% 100%;
+            background-position: 0 0, 0 0, 0 0;
+            background-repeat: repeat, repeat, no-repeat;
+            
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .preview-label {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            font-size: 0.7rem;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .action-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            background: var(--bg-panel);
+        }
+
+        .btn-test {
+            background: #0d2e23;
+            color: var(--accent-color);
+            border: none;
+            border-right: 1px solid var(--border-color);
+            padding: 1rem;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-test:hover { 
+            background: #144534; 
+            color: #fff;
+        }
+        
+        .btn-clear {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            padding: 0 1.5rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .btn-clear:hover { color: var(--danger-color); background: rgba(255, 71, 87, 0.05); }
+
+        .shuffle-btn {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            display: none; 
+            backdrop-filter: blur(4px);
+        }
+        .shuffle-btn:hover { background: rgba(0,0,0,0.5); }
+
+
+        /* RIGHT COL: Controls Pane */
+        .controls-pane {
+            gap: 1.5rem;
+            justify-content: space-between;
+        }
+
+        .control-section h3 {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin: 0 0 0.8rem 0;
+            font-weight: 700;
+        }
+
+        /* Style Grid */
+        .style-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+            gap: 8px;
+            margin-bottom: 1.5rem;
+            transition: opacity 0.3s;
+        }
+        .style-grid.disabled { opacity: 0.3; pointer-events: none; }
+
+        .style-btn {
+            aspect-ratio: 1;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            padding: 8px;
+            color: #555;
+        }
+        .style-btn:hover { background: #252525; color: #999; }
+        .style-btn.active {
+            background: #000;
+            border-color: #fff;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.1);
+        }
+        .style-btn svg { width: 100%; height: 100%; stroke: currentColor; fill: none; }
+
+        /* --- THE UNIFIED GRID --- */
+        /* Using a 6-column grid for flexible spanning */
+        .customize-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+        }
+
+        .control-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0 12px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: opacity 0.3s;
+            gap: 8px;
+        }
+
+        /* Top Row: Spans 3 cols each (50%) */
+        .card-half {
+            grid-column: span 3;
+        }
+
+        /* Bottom Row: Spans 2 cols each (33%) */
+        .card-third {
+            grid-column: span 2;
+        }
+
+        .control-card.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .card-label-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        /* Interactive Elements */
+        
+        /* 1. Color Swatch */
+        .color-wrapper {
+            width: 48px;
+            height: 32px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.2);
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+        .color-wrapper:hover { transform: scale(1.05); border-color: #fff; }
+        input[type="color"] {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 150%; height: 150%; padding: 0; margin: 0; border: none; background: none; cursor: pointer;
+        }
+
+        /* 2. Slider */
+        .slider-wrapper {
+            flex-grow: 1;
+            /* Removed max-width constraint to fill space */
+            display: flex;
+            align-items: center;
+        }
+        input[type="range"] {
+            width: 100%; height: 4px; background: #333; border-radius: 2px; appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none; width: 14px; height: 14px; background: #fff; border-radius: 50%;
+            cursor: pointer; transition: transform 0.1s; box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+        /* 3. Toggles */
+        .toggle-switch {
+            position: relative; display: inline-block; width: 32px; height: 18px;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider-bg {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #333; transition: .2s; border-radius: 34px;
+        }
+        .slider-bg:before {
+            position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px;
+            background-color: white; transition: .2s; border-radius: 50%;
+        }
+        input:checked + .slider-bg { background-color: var(--accent-color); }
+        input:checked + .slider-bg:before { transform: translateX(14px); background-color: #000; }
+
+
+        /* Install Area */
+        .install-zone {
+            margin-top: auto;
+            background: rgba(0, 255, 157, 0.03);
+            border: 1px dashed rgba(0, 255, 157, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .bookmarklet-btn {
+            flex-grow: 1;
+            padding: 1rem;
+            background: var(--accent-color);
+            color: #000;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 1rem;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: grab;
+            text-align: center;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .bookmarklet-btn:active {
+            cursor: grabbing;
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2);
+        }
+
+        .install-text {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.3;
+            width: 150px;
+        }
+        .install-header-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+            color: var(--text-main);
+            font-weight: 700;
+        }
+
+        /* Tooltips */
+        .tooltip-container {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: help;
+        }
+        .tooltip-icon {
+            color: #555; width: 14px; height: 14px; border-radius: 50%; border: 1px solid #444;
+            display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold;
+            transition: all 0.2s;
+        }
+        .tooltip-icon:hover { color: #fff; border-color: #fff; }
+        
+        .tooltip-content {
+            visibility: hidden; width: 220px; background-color: #222; color: #ccc;
+            text-align: left; border-radius: 8px; padding: 12px; position: absolute;
+            z-index: 100; transform: translateY(-110%) translateX(-50%);
+            opacity: 0; transition: opacity 0.2s; font-size: 0.75rem; line-height: 1.4;
+            border: 1px solid #444; box-shadow: 0 10px 20px rgba(0,0,0,0.5); pointer-events: none;
+            font-weight: 400; text-transform: none; letter-spacing: 0;
+        }
+        .tooltip-container:hover .tooltip-content { visibility: visible; opacity: 1; }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .dashboard { grid-template-columns: 1fr; }
+            .preview-box { min-height: 240px; }
+        }
+        @media (max-width: 600px) {
+            .card-half, .card-third { grid-column: span 6; } /* Stack everything on small screens */
+        }
+
+    </style>
+</head>
+<body>
+
+    <main class="configurator-container">
+        
+        <header>
+            <h1>Laser Cursor</h1>
+            <div class="value-prop">
+                Create a high-visibility reticle for your browser. <br>Design it, drag it to your bookmarks, and never lose your mouse again.
+            </div>
+        </header>
+
+        <section class="dashboard">
+            
+            <!-- LEFT PANEL: PREVIEW -->
+            <div class="panel preview-pane">
+                <div class="preview-box" id="preview-container">
+                    <div class="preview-label">Preview</div>
+                    <button class="shuffle-btn" id="shuffle-btn" aria-label="Shuffle Random Design">Shuffle 🎲</button>
+                    <!-- SVG injected here -->
+                </div>
+                <div class="action-row">
+                    <button class="btn-test" id="demo-btn" aria-label="Test cursor live on page">
+                        <span>▶</span> Test Live
+                    </button>
+                    <button class="btn-clear" id="clear-btn" aria-label="Clear active cursor">Clear</button>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: CONTROLS -->
+            <div class="panel controls-pane">
+                
+                <!-- Shapes -->
+                <div class="control-section">
+                    <h3>Select Shape</h3>
+                    <div class="style-grid" id="style-grid">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+
+                <!-- Settings Grid -->
+                <div class="control-section">
+                    <h3>Customize</h3>
+                    <div class="customize-grid">
+                        
+                        <!-- 1. Color (Half Width) -->
+                        <div class="control-card card-half" id="card-color">
+                            <span class="card-label">Color</span>
+                            <div class="color-wrapper" title="Pick Color">
+                                <input type="color" id="color-picker" value="#00ff9d" aria-label="Choose cursor color">
+                            </div>
+                        </div>
+
+                        <!-- 2. Size (Half Width) -->
+                        <div class="control-card card-half" id="card-size">
+                            <span class="card-label">Size</span>
+                            <div class="slider-wrapper">
+                                <input type="range" id="size-picker" min="20" max="120" value="60" aria-label="Adjust cursor size">
+                            </div>
+                        </div>
+
+                        <!-- 3. Shadow (Third Width) -->
+                        <div class="control-card card-third">
+                            <div class="card-label-group">
+                                <span class="card-label">Shadow</span>
+                                <div class="tooltip-container">
+                                    <div class="tooltip-icon" aria-hidden="true">?</div>
+                                    <div class="tooltip-content" role="tooltip">
+                                        Adds depth with a soft drop shadow while keeping the glow.
+                                    </div>
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="shadow-check" aria-label="Toggle shadow">
+                                <span class="slider-bg"></span>
+                            </label>
+                        </div>
+
+                        <!-- 4. Random (Third Width) -->
+                        <div class="control-card card-third">
+                            <div class="card-label-group">
+                                <span class="card-label">Random</span>
+                                <div class="tooltip-container">
+                                    <div class="tooltip-icon" aria-hidden="true">?</div>
+                                    <div class="tooltip-content" role="tooltip">
+                                        Generates a random color/shape on every click.
+                                    </div>
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="random-check" aria-label="Toggle random mode">
+                                <span class="slider-bg"></span>
+                            </label>
+                        </div>
+
+                        <!-- 5. Invert (Third Width) -->
+                        <div class="control-card card-third">
+                            <div class="card-label-group">
+                                <span class="card-label">Invert</span>
+                                <div class="tooltip-container">
+                                    <div class="tooltip-icon" aria-hidden="true">?</div>
+                                    <div class="tooltip-content" role="tooltip">
+                                        Inverts background colors (e.g. becomes black on white).
+                                    </div>
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="contrast-check" aria-label="Toggle high contrast inversion">
+                                <span class="slider-bg"></span>
+                            </label>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Install -->
+                <div class="install-zone">
+                    <div class="install-text">
+                        <div class="install-header-row">
+                            <span>To Install:</span>
+                            <div class="tooltip-container">
+                                <div class="tooltip-icon" aria-hidden="true">?</div>
+                                <div class="tooltip-content" role="tooltip">
+                                    <strong>Why a bookmarklet?</strong><br><br>
+                                    It's a secure way to run code on a specific page without installing a heavy browser extension. Note: Some sites (like GitHub) may block it via CSP.
+                                </div>
+                            </div>
+                        </div>
+                        Drag button to Bookmarks Bar.
+                    </div>
+                    <a id="bm-link" class="bookmarklet-btn" href="#" onclick="return false;" title="Drag this to your bookmarks bar">
+                        Laser Cursor
+                    </a>
+                </div>
+
+            </div>
+
+        </section>
+    </main>
+
+    <script>
+        const colorPicker = document.getElementById('color-picker');
+        const sizePicker = document.getElementById('size-picker');
+        const contrastCheck = document.getElementById('contrast-check');
+        const shadowCheck = document.getElementById('shadow-check');
+        const randomCheck = document.getElementById('random-check');
+        const bmLink = document.getElementById('bm-link');
+        const demoBtn = document.getElementById('demo-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const previewContainer = document.getElementById('preview-container');
+        const styleGrid = document.getElementById('style-grid');
+        const shuffleBtn = document.getElementById('shuffle-btn');
+        
+        // Cards to dim
+        const cardColor = document.getElementById('card-color');
+        const cardSize = document.getElementById('card-size');
+
+        let currentStyleIndex = 0;
+        let randomPreviewColor = '#00ff9d';
+        let randomPreviewIndex = 0;
+
+        // Definition of 20 styles
+        const styles = [
+            '<circle cx="12" cy="12" r="10" stroke-opacity="0.3"></circle><circle cx="12" cy="12" r="3"></circle><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line>',
+            '<circle cx="12" cy="12" r="9" stroke-width="2"></circle>',
+            '<circle cx="12" cy="12" r="10" stroke-width="1"></circle><circle cx="12" cy="12" r="6" stroke-width="1"></circle><circle cx="12" cy="12" r="2" fill="${COLOR}"></circle>',
+            '<path d="M12 2v6M12 16v6M2 12h6M16 12h6" stroke-width="2"/>',
+            '<path d="M5 9V5h4M19 9V5h-4M5 15v4h4M19 15v4h-4" stroke-width="2"/><circle cx="12" cy="12" r="2" fill="${COLOR}"/>',
+            '<circle cx="12" cy="12" r="9" stroke-width="2" stroke-dasharray="3 3"/>',
+            '<circle cx="12" cy="12" r="4" stroke-width="2"/><circle cx="12" cy="12" r="10" stroke-width="1" stroke-opacity="0.5"/>',
+            '<line x1="12" y1="0" x2="12" y2="24" stroke-width="1"/><line x1="0" y1="12" x2="24" y2="12" stroke-width="1"/><circle cx="12" cy="12" r="8" stroke-width="1"/>',
+            '<path d="M12 5L5 19h14z" stroke-width="1.5"/><circle cx="12" cy="14" r="2" fill="${COLOR}"/>',
+            '<circle cx="12" cy="12" r="3" fill="${COLOR}"/><path d="M12 2a10 10 0 0 1 10 10" stroke-width="1.5" stroke-opacity="0.4" stroke-dasharray="4 4"/><path d="M12 22a10 10 0 0 1-10-10" stroke-width="1.5" stroke-opacity="0.4" stroke-dasharray="4 4"/>',
+            '<path d="M4 4h5M4 4v5M20 4h-5M20 4v5M4 20h5M4 20v-5M20 20h-5M20 20v-5" stroke-width="2"/>',
+            '<path d="M12 2 L22 12 L12 22 L2 12 Z" stroke-width="1.5"/><circle cx="12" cy="12" r="2" fill="${COLOR}"/>',
+            '<path d="M12 2v4M12 22v-4M2 12h4M22 12h-4" stroke-width="2"/><path d="M12 2l-2 2m4 0l-2-2 M12 22l-2-2m4 0l-2 2 M2 12l2-2m0 4l-2-2 M22 12l-2-2m0 4l2-2" stroke-width="1.5"/>',
+            '<path d="M12 2 L20.66 7 L20.66 17 L12 22 L3.34 17 L3.34 7 Z" stroke-width="1.5"/>',
+            '<line x1="4" y1="4" x2="20" y2="20" stroke-width="2"/><line x1="20" y1="4" x2="4" y2="20" stroke-width="2"/>',
+            '<circle cx="8" cy="8" r="1" fill="${COLOR}"/><circle cx="16" cy="8" r="1" fill="${COLOR}"/><circle cx="8" cy="16" r="1" fill="${COLOR}"/><circle cx="16" cy="16" r="1" fill="${COLOR}"/><rect x="6" y="6" width="12" height="12" stroke-width="1" rx="2"/>',
+            '<circle cx="12" cy="12" r="2" fill="${COLOR}"/><circle cx="12" cy="12" r="9" stroke-width="1.5" stroke-dasharray="8 10"/>',
+            '<path d="M12 4v16M4 12h16" stroke-width="4" stroke-linecap="square"/>',
+            '<path d="M12 2 l2.5 7.5 h8 l-6.5 4.5 l2.5 7.5 l-6.5 -5 l-6.5 5 l2.5 -7.5 l-6.5 -4.5 h8 z" stroke-width="1.5"/>',
+            '<circle cx="12" cy="12" r="10" stroke-width="1.5"/><path d="M12 2 L12 12 L20 18 M12 12 L4 18" stroke-width="1"/>'
+        ];
+
+        // Helper to inject color
+        function getStyleContent(index, color) {
+            return styles[index].replace(/\$\{COLOR\}/g, color);
+        }
+
+        function generateSVG(color, styleIdx) {
+            const inner = getStyleContent(styleIdx, color);
+            return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
+        }
+
+        // --- Randomizer Logic ---
+        function generateRandomBrightHex() {
+            const h = Math.floor(Math.random() * 360);
+            const s = 100;
+            const l = 60; 
+
+            const c = (1 - Math.abs(2 * l / 100 - 1)) * (s / 100);
+            const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+            const m = l / 100 - c / 2;
+            let r = 0, g = 0, b = 0;
+
+            if (0 <= h && h < 60) { r = c; g = x; b = 0; }
+            else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
+            else if (120 <= h && h < 180) { r = 0; g = c; b = x; }
+            else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
+            else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
+            else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
+
+            const toHex = (n) => {
+                const hex = Math.round((n + m) * 255).toString(16);
+                return hex.length === 1 ? "0" + hex : hex;
+            };
+
+            return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+        }
+
+        function renderStyleButtons() {
+            styleGrid.innerHTML = '';
+            styles.forEach((style, index) => {
+                const btn = document.createElement('div');
+                const isActive = (index === currentStyleIndex);
+                btn.className = 'style-btn' + (isActive ? ' active' : '');
+                
+                // Active button shows selected color, others show gray
+                const previewColor = isActive ? colorPicker.value : 'currentColor';
+                const inner = style.replace(/\$\{COLOR\}/g, previewColor);
+                
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
+                
+                btn.addEventListener('click', () => {
+                    currentStyleIndex = index;
+                    updateUI();
+                });
+                styleGrid.appendChild(btn);
+            });
+        }
+
+        // Generate Code String
+        function generateCode(color, size, highContrast, isShadow, styleIdx, isRandom) {
+            const blendMode = highContrast ? 'mix-blend-mode: difference;' : '';
+            // Combined Filter Logic: Default glow + Optional shadow
+            const baseGlow = 'drop-shadow(0 0 4px ' + color + ')';
+            const extraShadow = isShadow ? ' drop-shadow(4px 4px 4px rgba(0,0,0,0.5))' : '';
+            const filterStyle = baseGlow + extraShadow;
+            
+            // If random, we inject ALL styles and the random logic
+            let setupLogic;
+            
+            if (isRandom) {
+                // Stringify the entire styles array for injection
+                const stylesJson = JSON.stringify(styles);
+                // Shadow logic for random mode (dynamic color ref)
+                const shadowLogic = isShadow 
+                    ? "'drop-shadow(0 0 4px ' + color + ') drop-shadow(4px 4px 4px rgba(0,0,0,0.5))'" 
+                    : "'drop-shadow(0 0 4px ' + color + ')'";
+                
+                setupLogic = `
+                var styles = ${stylesJson};
+                var styleIdx = Math.floor(Math.random() * styles.length);
+                var h = Math.floor(Math.random() * 360);
+                var color = 'hsl(' + h + ', 100%, 60%)';
+                
+                /* Helper to replace color */
+                var inner = styles[styleIdx].replace(/\\$\\{COLOR\\}/g, color);
+                var svgContent = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
+                var filterStyle = ${shadowLogic};
+                `;
+            } else {
+                // Static logic
+                const svgStr = generateSVG(color, styleIdx);
+                setupLogic = `
+                var color = "${color}";
+                var svgContent = '${svgStr}';
+                var filterStyle = "${filterStyle}";
+                `;
+            }
+
+            return `
+            (function() {
+                /* Singleton Check - remove old one if exists to allow re-roll in random mode */
+                var existing = document.getElementById('laser-cursor-drone');
+                if (existing) existing.remove();
+
+                /* Config */
+                var size = ${size}; 
+                var speed = 0.12; 
+                var hoverDist = 60;
+                var zIndex = 2147483647;
+
+                ${setupLogic}
+
+                /* Create Element */
+                var drone = document.createElement('div');
+                drone.id = 'laser-cursor-drone';
+                
+                drone.style.cssText = 'position: fixed; width: ' + size + 'px; height: ' + size + 'px; z-index: ' + zIndex + '; pointer-events: none; top: 0; left: 0; filter: ' + filterStyle + '; transition: opacity 0.3s; will-change: transform; ${blendMode}';
+                
+                drone.innerHTML = svgContent;
+                document.body.appendChild(drone);
+
+                /* State */
+                var mouseX = window.innerWidth / 2;
+                var mouseY = window.innerHeight / 2;
+                var droneX = mouseX - 100;
+                var droneY = mouseY - 100;
+
+                /* Input */
+                document.addEventListener('mousemove', function(e) {
+                    mouseX = e.clientX;
+                    mouseY = e.clientY;
+                }, {passive: true});
+
+                /* Loop */
+                function animate() {
+                    /* Check if element still exists (in case cleared) */
+                    if(!document.getElementById('laser-cursor-drone')) return;
+
+                    var dx = mouseX - droneX;
+                    var dy = mouseY - droneY;
+                    var dist = Math.sqrt(dx * dx + dy * dy);
+                    var angle = Math.atan2(dy, dx);
+                    var targetDist = dist - hoverDist;
+                    
+                    var moveX = Math.cos(angle) * targetDist;
+                    var moveY = Math.sin(angle) * targetDist;
+                    
+                    droneX += moveX * speed;
+                    droneY += moveY * speed;
+
+                    var displayX = droneX - (size / 2);
+                    var displayY = droneY - (size / 2);
+                    var rotate = (dx * 0.5); 
+
+                    drone.style.transform = 'translate3d(' + displayX + 'px, ' + displayY + 'px, 0) rotate(' + rotate + 'deg)';
+                    requestAnimationFrame(animate);
+                }
+                animate();
+            })();
+            `;
+        }
+
+        function hexToRgb(hex) {
+            var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+            hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+                return r + r + g + g + b + b;
+            });
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        function getContrastYIQ(hexcolor){
+            var rgb = hexToRgb(hexcolor);
+            if(!rgb) return 'black';
+            var yiq = ((rgb.r*299)+(rgb.b*587)+(rgb.b*114))/1000;
+            return (yiq >= 128) ? 'black' : 'white';
+        }
+
+        function rerollRandom() {
+            randomPreviewColor = generateRandomBrightHex();
+            randomPreviewIndex = Math.floor(Math.random() * styles.length);
+        }
+
+        function updateUI() {
+            const isRandom = randomCheck.checked;
+            const size = sizePicker.value;
+            const isHighContrast = contrastCheck.checked;
+            const isShadow = shadowCheck.checked;
+            
+            // Logic for Random Mode
+            if(isRandom) {
+                // Dim Visual controls ONLY (Shapes + Color + Size)
+                styleGrid.classList.add('disabled');
+                cardColor.classList.add('disabled');
+                cardSize.classList.add('disabled');
+                
+                shuffleBtn.style.display = 'block';
+
+                // Use the random vars
+                const previewSVG = generateSVG(randomPreviewColor, randomPreviewIndex);
+                
+                // Shadow vs Glow logic for preview
+                const baseGlow = `drop-shadow(0 0 4px ${randomPreviewColor})`;
+                const extraShadow = isShadow ? ' drop-shadow(4px 4px 4px rgba(0,0,0,0.5))' : '';
+                const shadowStyle = baseGlow + extraShadow;
+                
+                const contrastStyle = isHighContrast ? 'mix-blend-mode: difference;' : '';
+                
+                const previewStyle = `width: ${size}px; height: ${size}px; filter: ${shadowStyle}; ${contrastStyle}`;
+                previewContainer.innerHTML = `<div class="preview-label">Random Example</div><button class="shuffle-btn" id="shuffle-btn" aria-label="Shuffle Random Design">Shuffle 🎲</button><div style="${previewStyle}">${previewSVG}</div>`;
+                
+                // Re-attach shuffle listener
+                document.getElementById('shuffle-btn').addEventListener('click', () => {
+                    rerollRandom();
+                    updateUI();
+                });
+
+                // Button styling for Random Mode
+                bmLink.style.backgroundColor = '#fff';
+                bmLink.style.color = '#000';
+                bmLink.innerText = 'Laser Cursor'; 
+                bmLink.style.background = `linear-gradient(45deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff)`;
+                bmLink.style.backgroundSize = '400% 400%';
+                bmLink.style.animation = 'rainbow 10s ease infinite';
+                
+                if(!document.getElementById('rainbow-style')) {
+                    const s = document.createElement('style');
+                    s.id = 'rainbow-style';
+                    s.innerHTML = `@keyframes rainbow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }`;
+                    document.head.appendChild(s);
+                }
+
+            } else {
+                // Enable controls
+                styleGrid.classList.remove('disabled');
+                cardColor.classList.remove('disabled');
+                cardSize.classList.remove('disabled');
+                shuffleBtn.style.display = 'none';
+
+                const color = colorPicker.value;
+                
+                renderStyleButtons();
+                
+                // Highlight active style
+                const buttons = styleGrid.querySelectorAll('.style-btn');
+                if(buttons[currentStyleIndex]) {
+                    buttons[currentStyleIndex].style.color = color;
+                    buttons[currentStyleIndex].style.borderColor = color;
+                }
+
+                // Update Preview
+                const previewSVG = generateSVG(color, currentStyleIndex);
+                
+                // Shadow logic for preview
+                const baseGlow = `drop-shadow(0 0 4px ${color})`;
+                const extraShadow = isShadow ? ' drop-shadow(4px 4px 4px rgba(0,0,0,0.5))' : '';
+                const shadowStyle = baseGlow + extraShadow;
+                
+                const contrastStyle = isHighContrast ? 'mix-blend-mode: difference;' : '';
+                
+                const previewStyle = `width: ${size}px; height: ${size}px; filter: ${shadowStyle}; ${contrastStyle}`;
+                
+                previewContainer.innerHTML = `<div class="preview-label">Live Preview</div><div style="${previewStyle}">${previewSVG}</div>`;
+
+                // Update Install Button
+                bmLink.style.background = ''; // reset gradient
+                bmLink.style.animation = '';
+                bmLink.style.backgroundColor = color;
+                bmLink.style.boxShadow = `0 4px 0 ${color}44`;
+                bmLink.style.color = getContrastYIQ(color);
+                bmLink.innerText = 'Laser Cursor';
+            }
+
+            // Generate Code
+            const code = generateCode(
+                isRandom ? randomPreviewColor : colorPicker.value, 
+                size, 
+                isHighContrast,
+                isShadow,
+                isRandom ? randomPreviewIndex : currentStyleIndex,
+                isRandom
+            );
+            const cleanCode = code.replace(/\n/g, ' ').replace(/\s+/g, ' ');
+            bmLink.href = "javascript:" + encodeURIComponent(cleanCode);
+        }
+
+        // Init: Randomize on load
+        function initRandomStart() {
+            currentStyleIndex = Math.floor(Math.random() * styles.length);
+            const randomHex = generateRandomBrightHex();
+            colorPicker.value = randomHex;
+            sizePicker.value = Math.floor(Math.random() * (100 - 40 + 1) + 40); 
+        }
+
+        // Listeners
+        colorPicker.addEventListener('input', updateUI);
+        sizePicker.addEventListener('input', updateUI);
+        contrastCheck.addEventListener('change', updateUI);
+        shadowCheck.addEventListener('change', updateUI);
+        randomCheck.addEventListener('change', () => {
+            if(randomCheck.checked) rerollRandom();
+            updateUI();
+        });
+
+        // Actions
+        demoBtn.addEventListener('click', () => {
+            const existing = document.getElementById('laser-cursor-drone');
+            if(existing) existing.remove();
+            
+            const isRandom = randomCheck.checked;
+            
+            const code = generateCode(
+                isRandom ? randomPreviewColor : colorPicker.value, 
+                sizePicker.value, 
+                contrastCheck.checked,
+                shadowCheck.checked,
+                isRandom ? randomPreviewIndex : currentStyleIndex,
+                isRandom
+            );
+            new Function(code)();
+        });
+
+        clearBtn.addEventListener('click', () => {
+             const existing = document.getElementById('laser-cursor-drone');
+             if(existing) existing.remove();
+        });
+
+        // Initialize
+        initRandomStart();
+        updateUI();
+
+    </script>
+</body>
+</html>
